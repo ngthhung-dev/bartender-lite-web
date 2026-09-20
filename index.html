@@ -1056,19 +1056,6 @@ var QRCode;
         </button>
       </div>
 
-      <div id="divider-before-preview" class="hidden sm:block h-5 w-px bg-slate-600"></div>
-
-      <div id="preview-nav-container" class="hidden flex items-center bg-slate-700 rounded px-2 py-1 gap-1.5 text-xs whitespace-nowrap">
-        <span class="text-slate-300 hidden md:inline">Xem trước:</span>
-        <button id="btn-prev-row" class="hover:text-blue-400 text-slate-300 disabled:opacity-30 p-1" disabled>
-          <i class="fa-solid fa-chevron-left"></i>
-        </button>
-        <span id="current-row-display" class="font-mono font-bold text-blue-400">0 / 0</span>
-        <button id="btn-next-row" class="hover:text-blue-400 text-slate-300 disabled:opacity-30 p-1" disabled>
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
-      </div>
-
       <div id="divider-before-range" class="hidden sm:block h-5 w-px bg-slate-600"></div>
 
       <!-- Ô CHỌN PHẠM VI IN - CHỈ HIỂN THỊ KHI ĐÃ NẠP DỮ LIỆU -->
@@ -1139,15 +1126,27 @@ var QRCode;
         </div>
       </div>
 
-      <div class="flex-1 p-3 flex flex-col min-h-[150px] overflow-hidden">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-xs font-bold uppercase text-slate-500 tracking-wider">Cột dữ liệu Excel</h2>
-          <span id="excel-status-badge" class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium truncate max-w-[100px]">Chưa nạp</span>
-        </div>
-        <p class="text-[11px] text-slate-400 mb-2">Bấm chọn phần tử để map cột dữ liệu bên dưới:</p>
-        <div id="excel-columns-container" class="flex-1 overflow-y-auto space-y-1.5 pr-1">
-          <div class="text-center py-6 text-xs text-slate-400 italic">
-            Vui lòng nạp file Excel để tải danh sách các cột dữ liệu.
+      <div id="sidebar-excel-mapping" class="flex-1 p-3 flex flex-col min-h-[150px] overflow-y-auto">
+        <div class="bg-amber-50/80 border border-amber-200 rounded-lg p-2.5">
+          <div class="flex items-center gap-1.5 text-amber-800 font-bold text-xs mb-2">
+            <i class="fa-solid fa-link text-amber-600"></i>
+            <span>Mapping Cột Dữ Liệu Excel</span>
+          </div>
+          <div class="space-y-2">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-600 mb-1">Chọn cột Excel tương ứng:</label>
+              <select id="prop-excel-column" onchange="applyColumnMapping()" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-medium">
+                <option value="">-- Không sử dụng (Cố định) --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-0.5">Tiền tố (Prefix):</label>
+              <input type="text" id="prop-prefix" oninput="updateSelectedElement()" placeholder="vd: Mã SP: " class="w-full border border-slate-300 rounded px-2 py-1 text-xs">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-0.5">Hậu tố (Suffix):</label>
+              <input type="text" id="prop-suffix" oninput="updateSelectedElement()" placeholder="vd: VNĐ" class="w-full border border-slate-300 rounded px-2 py-1 text-xs">
+            </div>
           </div>
         </div>
       </div>
@@ -1226,6 +1225,17 @@ var QRCode;
         </button>
       </div>
 
+      <div id="preview-nav-container" class="hidden absolute bottom-4 flex items-center bg-slate-800/90 text-white backdrop-blur shadow-lg rounded-lg px-2.5 py-1 gap-1.5 text-xs whitespace-nowrap z-30" style="left:50%; transform:translateX(-50%);">
+        <span class="text-slate-300">Xem trước:</span>
+        <button id="btn-prev-row" class="hover:text-blue-400 text-slate-300 disabled:opacity-30 p-1" disabled>
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span id="current-row-display" class="font-mono font-bold text-blue-400">0 / 0</span>
+        <button id="btn-next-row" class="hover:text-blue-400 text-slate-300 disabled:opacity-30 p-1" disabled>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+
       <div id="canvas-wrapper" class="relative transition-transform duration-100 origin-center flex items-center justify-center">
         <div id="design-canvas" class="bg-white canvas-bg relative overflow-hidden shadow-2xl rounded border border-slate-300"></div>
       </div>
@@ -1243,37 +1253,13 @@ var QRCode;
         <span id="selected-type-tag" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-semibold truncate max-w-[100px]">Chưa chọn</span>
       </div>
 
-      <div id="properties-panel" class="flex-1 p-3 overflow-y-auto space-y-4">
+      <div id="properties-panel" class="flex-1 p-3 overflow-y-auto">
         <div id="empty-properties" class="text-center py-12 text-xs text-slate-400">
           <i class="fa-solid fa-arrow-pointer text-2xl text-slate-300 mb-2 block"></i>
           Nhấp vào bất kỳ phần tử nào trên khung thiết kế để chỉnh sửa thuộc tính.
         </div>
 
         <div id="active-properties" class="space-y-4 hidden">
-          <!-- Excel Mapping -->
-          <div class="bg-amber-50/80 border border-amber-200 rounded-lg p-2.5">
-            <div class="flex items-center gap-1.5 text-amber-800 font-bold text-xs mb-2">
-              <i class="fa-solid fa-link text-amber-600"></i>
-              <span>Mapping Cột Dữ Liệu Excel</span>
-            </div>
-            <div class="space-y-2">
-              <div>
-                <label class="block text-[11px] font-medium text-slate-600 mb-1">Chọn cột Excel tương ứng:</label>
-                <select id="prop-excel-column" onchange="applyColumnMapping()" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-medium">
-                  <option value="">-- Không sử dụng (Cố định) --</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-[11px] text-slate-500 mb-0.5">Tiền tố (Prefix):</label>
-                <input type="text" id="prop-prefix" oninput="updateSelectedElement()" placeholder="vd: Mã SP: " class="w-full border border-slate-300 rounded px-2 py-1 text-xs">
-              </div>
-              <div>
-                <label class="block text-[11px] text-slate-500 mb-0.5">Hậu tố (Suffix):</label>
-                <input type="text" id="prop-suffix" oninput="updateSelectedElement()" placeholder="vd: VNĐ" class="w-full border border-slate-300 rounded px-2 py-1 text-xs">
-              </div>
-            </div>
-          </div>
-
           <!-- Alignment -->
           <div>
             <h3 class="text-xs font-bold text-slate-600 border-b pb-1 mb-2 flex items-center gap-1.5">
@@ -1584,12 +1570,14 @@ var QRCode;
     }
 
     function setupHistoryPropertyListeners() {
-      const panel = document.getElementById('active-properties');
-      if (!panel) return;
-      panel.querySelectorAll('input, select, textarea').forEach(control => {
-        control.addEventListener('focus', beginHistoryEdit);
-        control.addEventListener('change', commitHistoryEdit);
-        control.addEventListener('blur', commitHistoryEdit);
+      const panels = [document.getElementById('active-properties'), document.getElementById('sidebar-excel-mapping')];
+      panels.forEach(panel => {
+        if (!panel) return;
+        panel.querySelectorAll('input, select, textarea').forEach(control => {
+          control.addEventListener('focus', beginHistoryEdit);
+          control.addEventListener('change', commitHistoryEdit);
+          control.addEventListener('blur', commitHistoryEdit);
+        });
       });
     }
 
@@ -1692,10 +1680,8 @@ var QRCode;
     function updatePrintRangeVisibility() {
       const printRangeContainer = document.getElementById('print-range-container');
       const previewNavContainer = document.getElementById('preview-nav-container');
-      // 2 dấu phân cách "|" bao quanh cụm Xem trước / Phạm vi in trên thanh menu:
-      // phải ẩn/hiện cùng lúc với cụm này, nếu không sẽ bị dư dấu phân cách
-      // khi cụm Xem trước / Phạm vi in đang ẩn.
-      const dividerBeforePreview = document.getElementById('divider-before-preview');
+      // Dấu phân cách "|" trước cụm "Phạm vi in" trên thanh menu: phải ẩn/hiện cùng lúc
+      // với cụm này, nếu không sẽ bị dư dấu phân cách khi cụm đang ẩn.
       const dividerBeforeRange = document.getElementById('divider-before-range');
 
       const hasExcelData = Array.isArray(excelData) && excelData.length > 0;
@@ -1704,13 +1690,10 @@ var QRCode;
       if (previewNavContainer) {
         previewNavContainer.classList.toggle('hidden', !shouldShow);
       }
-      // Lưu ý: 2 dấu phân cách này dùng class "hidden sm:block" (ẩn trên mobile,
+      // Lưu ý: dấu phân cách này dùng class "hidden sm:block" (ẩn trên mobile,
       // hiện trên desktop). classList.toggle('hidden', ...) sẽ KHÔNG ẩn được
       // trên desktop vì "sm:block" ghi đè "hidden" ở breakpoint đó, nên phải
       // set trực tiếp style.display để đảm bảo ẩn/hiện đúng ở mọi kích thước màn hình.
-      if (dividerBeforePreview) {
-        dividerBeforePreview.style.display = shouldShow ? '' : 'none';
-      }
       if (dividerBeforeRange) {
         dividerBeforeRange.style.display = shouldShow ? '' : 'none';
       }
@@ -2562,9 +2545,7 @@ var QRCode;
               excelColumns = Object.keys(excelData[0]);
               currentRowIndex = 0;
               document.getElementById('excel-btn-text').innerText = file.name.substring(0, 10) + '...';
-              document.getElementById('excel-status-badge').className = 'text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-semibold truncate max-w-[100px]';
-              document.getElementById('excel-status-badge').innerText = `${excelData.length} dòng`;
-              
+
               document.getElementById('btn-clear-excel').classList.remove('hidden');
 
               // Đã có dữ liệu Excel -> kích hoạt và hiển thị "Phạm vi in"
@@ -2600,19 +2581,10 @@ var QRCode;
 
       document.getElementById('excel-file-input').value = '';
       document.getElementById('excel-btn-text').innerText = 'Nạp dữ liệu (.xls, .xlsx, .csv)';
-      document.getElementById('excel-status-badge').className = 'text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium truncate max-w-[100px]';
-      document.getElementById('excel-status-badge').innerText = 'Chưa nạp';
       document.getElementById('btn-clear-excel').classList.add('hidden');
 
       // Xóa dữ liệu Excel -> ẩn hoàn toàn "Phạm vi in"
       updatePrintRangeVisibility();
-
-      const container = document.getElementById('excel-columns-container');
-      container.innerHTML = `
-        <div class="text-center py-6 text-xs text-slate-400 italic">
-          Vui lòng nạp file Excel để tải danh sách các cột dữ liệu.
-        </div>
-      `;
 
       const selectProp = document.getElementById('prop-excel-column');
       if (selectProp) {
@@ -2625,9 +2597,7 @@ var QRCode;
     }
 
     function populateExcelColumnsUI() {
-      const container = document.getElementById('excel-columns-container');
       const selectProp = document.getElementById('prop-excel-column');
-      container.innerHTML = '';
       selectProp.innerHTML = '<option value="">-- Không sử dụng (Cố định) --</option>';
 
       excelColumns.forEach(col => {
@@ -2635,29 +2605,6 @@ var QRCode;
         option.value = col;
         option.textContent = col;
         selectProp.appendChild(option);
-
-        const colBadge = document.createElement('div');
-        colBadge.className = 'col-badge p-2 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 rounded cursor-pointer text-xs flex items-center justify-between transition group';
-        colBadge.dataset.col = col;
-        colBadge.innerHTML = `
-          <div class="flex items-center gap-1.5 overflow-hidden">
-            <i class="fa-solid fa-table-columns text-slate-400 group-hover:text-amber-600"></i>
-            <span class="font-medium text-slate-700 truncate">${col}</span>
-          </div>
-          <i class="fa-solid fa-plus text-[10px] text-slate-400 group-hover:text-amber-600"></i>
-        `;
-
-        colBadge.addEventListener('click', () => {
-          if (selectedElementId) {
-            const el = elements.find(e => e.id === selectedElementId);
-            if (el) { el.excelColumn = col; renderElementDOM(el, canvas); updatePropertiesPanel(el); }
-          } else {
-            addElement('field', { excelColumn: col, text: `[${col}]` });
-          }
-          updatePrintRangeVisibility();
-        });
-
-        container.appendChild(colBadge);
       });
     }
 
