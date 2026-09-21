@@ -1214,7 +1214,7 @@ var QRCode;
 
     <!-- CENTER CANVAS -->
     <main class="flex-1 bg-slate-200 p-4 sm:p-6 overflow-auto flex items-center justify-center relative">
-      <div class="absolute bottom-4 right-4 sm:right-6 bg-slate-800/90 text-white backdrop-blur shadow-lg rounded-lg px-2.5 py-1 flex items-center gap-1.5 z-30 text-xs">
+      <div class="absolute bottom-4 bg-slate-800/90 text-white backdrop-blur shadow-lg rounded-lg px-2.5 py-1 flex items-center gap-1.5 z-30 text-xs" style="left:50%; transform:translateX(-50%);">
         <button onclick="zoomOut()" title="Thu nhỏ (-)" class="p-1 hover:text-blue-400 transition"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
         <button onclick="resetZoom()" title="Đặt lại 100%" class="font-mono font-bold text-blue-400 hover:underline px-1 min-w-[36px] text-center" id="zoom-display">100%</button>
         <button onclick="zoomIn()" title="Phóng to (+)" class="p-1 hover:text-blue-400 transition"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
@@ -1225,7 +1225,7 @@ var QRCode;
         </button>
       </div>
 
-      <div id="preview-nav-container" class="hidden absolute bottom-4 flex items-center bg-slate-800/90 text-white backdrop-blur shadow-lg rounded-lg px-2.5 py-1 gap-1.5 text-xs whitespace-nowrap z-30" style="left:50%; transform:translateX(-50%);">
+      <div id="preview-nav-container" class="hidden absolute flex items-center bg-slate-800/90 text-white backdrop-blur shadow-lg rounded-lg px-2.5 py-1 gap-1.5 text-xs whitespace-nowrap z-30" style="top:1rem; left:50%; transform:translateX(-50%);">
         <span class="text-slate-300">Xem trước:</span>
         <button id="btn-prev-row" class="hover:text-blue-400 text-slate-300 disabled:opacity-30 p-1" disabled>
           <i class="fa-solid fa-chevron-left"></i>
