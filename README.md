@@ -2,7 +2,7 @@
 
 **Bartender Lite** là ứng dụng web **thiết kế & in tem nhãn** đơn giản, nhẹ, chạy hoàn toàn trên trình duyệt — miễn phí, không cần cài đặt, không cần đăng nhập.
 
-🔗 **Dùng thử ngay:** [ngthhung-dev.github.io/bartender-lite](https://ngthhung-dev.github.io/bartender-lite/)
+🔗 **Dùng thử ngay:** [ngthhung-dev.github.io/bartender-lite-web](https://ngthhung-dev.github.io/bartender-lite-web/)
 
 ## ✨ Tính năng chính
 
@@ -25,7 +25,7 @@
 
 Không cần cài đặt gì cả — chỉ cần mở trình duyệt và truy cập:
 
-👉 **[ngthhung-dev.github.io/bartender-lite](https://ngthhung-dev.github.io/bartender-lite/)**
+👉 **[ngthhung-dev.github.io/bartender-lite-web](https://ngthhung-dev.github.io/bartender-lite-web/)**
 
 Hoặc chạy cục bộ: tải file `index.html` về máy rồi mở bằng trình duyệt bất kỳ (Chrome, Edge, Firefox...).
 
