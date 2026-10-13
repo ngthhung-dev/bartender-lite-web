@@ -1621,6 +1621,11 @@ var QRCode;
           if (!el) return;
 
           const step = e.shiftKey ? 10 : 1;
+          // beginHistoryEdit() chỉ chụp snapshot MỘT LẦN (lần đầu tiên nhấn phím - xem guard
+          // "if (!historyEditSnapshot)" bên trong hàm), giống hệt cách thao tác kéo/resize chỉ
+          // tạo 1 bước hoàn tác cho cả quá trình kéo. commitHistoryEdit() được dời sang sự kiện
+          // "keyup" bên dưới, để giữ phím/nhấn phím nhiều lần liên tiếp gộp lại thành ĐÚNG 1
+          // bước hoàn tác duy nhất, thay vì mỗi lần nhấn lại tạo riêng 1 bước.
           beginHistoryEdit();
           switch (e.key) {
             case 'ArrowLeft': el.left = Math.max(0, el.left - step); break;
@@ -1631,6 +1636,12 @@ var QRCode;
           clampElementToCanvas(el);
           renderElementDOM(el, canvas);
           updatePropertiesPanel(el);
+        }
+      });
+
+      // Chốt lại bước hoàn tác khi nhả phím mũi tên (xem giải thích ở trình xử lý "keydown").
+      document.addEventListener('keyup', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
           commitHistoryEdit();
         }
       });
@@ -1861,11 +1872,24 @@ var QRCode;
       renderColumnBadgesSelection();
     }
 
+    // Định dạng 1 giá trị Date (cột ngày tháng từ Excel, nhờ tùy chọn "cellDates: true" khi
+    // đọc file) thành chuỗi "dd/mm/yyyy" dễ đọc, thay vì để trình duyệt tự ý gọi String(Date)
+    // ra cả chuỗi giờ/múi giờ dài dòng kiểu "Tue Oct 13 2026 00:00:00 GMT+0700...".
+    function formatExcelDateValue(d) {
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    }
+
     function getElementDisplayContent(el, rowIndex = currentRowIndex) {
       let rawValue = el.text;
       if (el.excelColumn && excelData.length > 0 && excelData[rowIndex]) {
         const mappedVal = excelData[rowIndex][el.excelColumn];
-        rawValue = (mappedVal !== undefined && mappedVal !== null) ? String(mappedVal) : '';
+        if (mappedVal instanceof Date && !isNaN(mappedVal)) {
+          // Cột ngày tháng: hiển thị dd/mm/yyyy thay vì số serial ngày của Excel (vd: 45678).
+          rawValue = formatExcelDateValue(mappedVal);
+        } else {
+          rawValue = (mappedVal !== undefined && mappedVal !== null) ? String(mappedVal) : '';
+        }
       }
       return `${el.prefix || ''}${rawValue}${el.suffix || ''}`;
     }
@@ -2026,28 +2050,43 @@ var QRCode;
       } 
       else if (el.type === 'barcode') {
         contentDiv.className = 'element-content w-full h-full flex items-center justify-center overflow-hidden bg-white';
-        contentDiv.innerHTML = `<svg class="barcode-svg" style="width:100%; height:100%;"></svg>`;
-        try {
-          const desiredFontSize = el.fontSize !== undefined ? parseInt(el.fontSize) : 14;
-          const calculatedHeight = Math.max(5, el.height - (el.showBarcodeText ? (desiredFontSize + textMargin + 4) : 4));
-          
-          JsBarcode(contentDiv.querySelector('.barcode-svg'), displayContent || '123456789', {
-            format: el.barcodeFormat || 'CODE128',
-            displayValue: el.showBarcodeText,
-            fontSize: desiredFontSize,
-            // JsBarcode dùng "fontOptions" (không phải CSS font-weight) để in đậm/nghiêng
-            // chữ số hiển thị bên dưới mã vạch. Thiếu dòng này khiến nút "Đậm (Bold)"
-            // không có tác dụng với phần tử Mã vạch.
-            fontOptions: el.fontWeight === 'bold' ? 'bold' : '',
-            textPosition: "bottom",
-            textAlign: el.textAlign || "center",
-            textMargin: textMargin,
-            margin: 1,
-            width: 1.2,
-            height: calculatedHeight
-          });
-        } catch (err) {
-          contentDiv.innerHTML = `<span class="text-rose-500 text-[10px]">Mã vạch lỗi</span>`;
+        const desiredFontSize = el.fontSize !== undefined ? parseInt(el.fontSize) : 14;
+        const calculatedHeight = Math.max(5, el.height - (el.showBarcodeText ? (desiredFontSize + textMargin + 4) : 4));
+        const barcodeValue = displayContent || '123456789';
+
+        // CHỈ VẼ LẠI MÃ VẠCH KHI DỮ LIỆU/ĐỊNH DẠNG THỰC SỰ THAY ĐỔI (so sánh "chữ ký" các
+        // tham số ảnh hưởng tới hình vẽ). Kéo/thả chỉ đổi left/top, resize theo chiều ngang
+        // chỉ co giãn khung CSS (SVG tự scale 100%x100%) - không cần JsBarcode tính lại SVG
+        // từ đầu mỗi lần renderElementDOM() chạy (vd: mỗi khi rê chuột kéo phần tử).
+        const barcodeSignature = JSON.stringify([
+          barcodeValue, el.barcodeFormat || 'CODE128', !!el.showBarcodeText,
+          desiredFontSize, el.fontWeight === 'bold', el.textAlign || 'center',
+          textMargin, calculatedHeight
+        ]);
+
+        if (!contentDiv.querySelector('.barcode-svg') || contentDiv.dataset.barcodeSig !== barcodeSignature) {
+          contentDiv.innerHTML = `<svg class="barcode-svg" style="width:100%; height:100%;"></svg>`;
+          try {
+            JsBarcode(contentDiv.querySelector('.barcode-svg'), barcodeValue, {
+              format: el.barcodeFormat || 'CODE128',
+              displayValue: el.showBarcodeText,
+              fontSize: desiredFontSize,
+              // JsBarcode dùng "fontOptions" (không phải CSS font-weight) để in đậm/nghiêng
+              // chữ số hiển thị bên dưới mã vạch. Thiếu dòng này khiến nút "Đậm (Bold)"
+              // không có tác dụng với phần tử Mã vạch.
+              fontOptions: el.fontWeight === 'bold' ? 'bold' : '',
+              textPosition: "bottom",
+              textAlign: el.textAlign || "center",
+              textMargin: textMargin,
+              margin: 1,
+              width: 1.2,
+              height: calculatedHeight
+            });
+            contentDiv.dataset.barcodeSig = barcodeSignature;
+          } catch (err) {
+            contentDiv.innerHTML = `<span class="text-rose-500 text-[10px]">Mã vạch lỗi</span>`;
+            delete contentDiv.dataset.barcodeSig;
+          }
         }
       } 
       else if (el.type === 'qrcode') {
@@ -2535,7 +2574,10 @@ var QRCode;
         reader.onload = (evt) => {
           try {
             const data = new Uint8Array(evt.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
+            // cellDates:true -> các ô định dạng Ngày tháng trong Excel được đọc thành đối
+            // tượng Date của JS (thay vì số serial ngày thô kiểu 45678), để hiển thị đúng
+            // dạng dd/mm/yyyy (xem formatExcelDateValue()) thay vì hiện ra một con số.
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
             excelData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
